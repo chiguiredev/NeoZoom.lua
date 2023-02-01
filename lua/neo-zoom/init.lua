@@ -12,10 +12,9 @@ local function create_autocmds()
   vim.api.nvim_create_autocmd({ 'WinLeave', }, {
     group = 'NeoZoom.lua',
     pattern = '*',
-    callback = function ()
-      if
-        not M.did_zoom()[1]
-        or vim.api.nvim_get_current_win() ~= M.did_zoom()[2]
+    callback = function()
+      if not M.did_zoom()[1]
+          or vim.api.nvim_get_current_win() ~= M.did_zoom()[2]
       then return end
       _exit_view = vim.fn.winsaveview()
     end
@@ -23,86 +22,85 @@ local function create_autocmds()
   vim.api.nvim_create_autocmd({ 'WinEnter', }, {
     group = 'NeoZoom.lua',
     pattern = '*',
-    callback = function ()
-      if
-        _in_execution
-        or not M.disable_by_cursor
-        or not M.did_zoom()[1]
-        or vim.api.nvim_get_current_win() == M.did_zoom()[2]
-        or vim.api.nvim_win_get_config(0).relative ~= ''
+    callback = function()
+      if _in_execution
+          or not M.disable_by_cursor
+          or not M.did_zoom()[1]
+          or vim.api.nvim_get_current_win() == M.did_zoom()[2]
+          or vim.api.nvim_win_get_config(0).relative ~= ''
       then return end
       M.neo_zoom()
     end
   })
 end
+
 ---------------------------------------------------------------------------------------------------
 function M.setup(opt)
   if not opt then opt = {} end
 
-  M.top_ratio = opt.top_ratio or 0.03
-  M.left_ratio = opt.left_ratio or 0.32
-  M.height_ratio = opt.height_ratio or 0.9
-  M.width_ratio = opt.width_ratio or 0.66
+  M.top_ratio = 1.0
+  M.left_ratio = 1.0
+  M.height_ratio = 1.0
+  M.width_ratio = 1.0
   M.border = opt.border or 'double'
 
   M.disable_by_cursor = opt.disable_by_cursor
-    if M.disable_by_cursor == nil then M.disable_by_cursor = true end
-  M.exclude = U.table_add_values({ 'lspinfo', 'mason', 'lazy', 'fzf' }, type(opt.exclude_filetypes) == 'table' and opt.exclude_filetypes or {})
+  if M.disable_by_cursor == nil then M.disable_by_cursor = true end
+  M.exclude = U.table_add_values({ 'lspinfo', 'mason', 'lazy', 'fzf' },
+    type(opt.exclude_filetypes) == 'table' and opt.exclude_filetypes or {})
   M.exclude = U.table_add_values(M.exclude, type(opt.exclude_buftypes) == 'table' and opt.exclude_buftypes or {})
   M.popup = opt.popup or { enabled = true, exclude_filetypes = {}, exclude_buftypes = {} }
-    if type(M.popup) ~= 'table' then M.popup = {} end
-    if type(M.popup.enabled) ~= 'boolean' then M.popup.enabled = true end
-    if type(M.popup.exclude_filetypes) ~= 'table' then M.popup.exclude_filetypes = {} end
-    if type(M.popup.exclude_buftypes) ~= 'table' then M.popup.exclude_buftypes = {} end
+  if type(M.popup) ~= 'table' then M.popup = {} end
+  if type(M.popup.enabled) ~= 'boolean' then M.popup.enabled = true end
+  if type(M.popup.exclude_filetypes) ~= 'table' then M.popup.exclude_filetypes = {} end
+  if type(M.popup.exclude_buftypes) ~= 'table' then M.popup.exclude_buftypes = {} end
   M.presets = opt.presets or {}
-    -- TODO: need to refactor.
-    if type(M.presets) ~= 'table' then M.presets = {} end
-    setmetatable(M._presets_delegate, {
-      __index = function (_, ft)
-        for _, preset in pairs(M.presets) do
-          if type(preset) ~= 'table'
+  -- TODO: need to refactor.
+  if type(M.presets) ~= 'table' then M.presets = {} end
+  setmetatable(M._presets_delegate, {
+    __index = function(_, ft)
+      for _, preset in pairs(M.presets) do
+        if type(preset) ~= 'table'
             or type(preset.config) ~= 'table'
             or type(preset.filetypes) ~= 'table'
-          then goto continue end
-          for _, _ft in pairs(preset.filetypes) do
-            if type(_ft) == 'string'
+        then goto continue end
+        for _, _ft in pairs(preset.filetypes) do
+          if type(_ft) == 'string'
               and ft == _ft or string.match(ft, _ft) then
-              preset.config.top_ratio = preset.config.top_ratio or M.top_ratio
-              preset.config.left_ratio = preset.config.left_ratio or M.left_ratio
-              preset.config.height_ratio = preset.config.height_ratio or M.height_ratio
-              preset.config.width_ratio = preset.config.width_ratio or M.width_ratio
-              preset.config.border = preset.config.border or M.border
-              return preset
-            end
+            preset.config.top_ratio = preset.config.top_ratio or M.top_ratio
+            preset.config.left_ratio = preset.config.left_ratio or M.left_ratio
+            preset.config.height_ratio = preset.config.height_ratio or M.height_ratio
+            preset.config.width_ratio = preset.config.width_ratio or M.width_ratio
+            preset.config.border = preset.config.border or M.border
+            return preset
           end
-          ::continue::
         end
-        -- use default
-        return {
-          config = {
-            top_ratio = M.top_ratio,
-            left_ratio = M.left_ratio,
-            height_ratio = M.height_ratio,
-            width_ratio = M.width_ratio,
-            border = M.border,
-          }
-        }
+        ::continue::
       end
-    })
+      -- use default
+      return {
+        config = {
+          top_ratio = M.top_ratio,
+          left_ratio = M.left_ratio,
+          height_ratio = M.height_ratio,
+          width_ratio = M.width_ratio,
+          border = M.border,
+        }
+      }
+    end
+  })
 
   zoom_book = {} -- mappings: zoom_win -> original_win
   create_autocmds()
 end
-
 
 function M.did_zoom(tabpage)
   if not tabpage then tabpage = 0 end
   local cur_tab = vim.api.nvim_get_current_tabpage()
 
   for z, _ in pairs(zoom_book) do
-    if
-      vim.api.nvim_win_is_valid(z)
-      and vim.api.nvim_win_get_tabpage(z) == cur_tab
+    if vim.api.nvim_win_is_valid(z)
+        and vim.api.nvim_win_get_tabpage(z) == cur_tab
     then
       return { true, z }
     end
@@ -110,7 +108,6 @@ function M.did_zoom(tabpage)
 
   return { false, nil }
 end
-
 
 function M.neo_zoom(opt)
   _in_execution = true
@@ -135,7 +132,7 @@ function M.neo_zoom(opt)
 
   -- deal with case: might zoom.
   if U.table_contains(M.exclude, vim.bo.filetype)
-    or U.table_contains(M.exclude, vim.bo.buftype) then
+      or U.table_contains(M.exclude, vim.bo.buftype) then
     return
   end
 
@@ -152,19 +149,19 @@ function M.neo_zoom(opt)
   local border = preset.config.border
 
   zoom_book[
-    vim.api.nvim_open_win(0, true, {
-      -- fixed.
-      relative = 'editor',
-      focusable = true,
-      zindex = 5,
-      -- variables.
-      row = float_top,
-      col = float_left,
-      height = float_height,
-      width = float_width,
-      border = border,
-    })
-  ] = win_on_zoom
+      vim.api.nvim_open_win(0, true, {
+        -- fixed.
+        relative = 'editor',
+        focusable = true,
+        zindex = 5,
+        -- variables.
+        row = float_top,
+        col = float_left,
+        height = float_height,
+        width = float_width,
+        border = border,
+      })
+      ] = win_on_zoom
 
   vim.api.nvim_set_current_buf(buf_on_zoom)
   if type(preset.callbacks) == 'table' then
@@ -174,8 +171,8 @@ function M.neo_zoom(opt)
   end
 
   if M.popup.enabled
-    and not U.table_contains(M.popup.exclude_filetypes, vim.bo.filetype)
-    and not U.table_contains(M.popup.exclude_buftypes, vim.bo.buftype)
+      and not U.table_contains(M.popup.exclude_filetypes, vim.bo.filetype)
+      and not U.table_contains(M.popup.exclude_buftypes, vim.bo.buftype)
   then
     vim.api.nvim_set_current_win(win_on_zoom)
     vim.cmd('enew')
@@ -187,12 +184,12 @@ function M.neo_zoom(opt)
   _in_execution = false
 end
 
-
 local function setup_vim_commands()
   vim.cmd [[
     command! NeoZoomToggle lua require'neo-zoom'.neo_zoom()
   ]]
 end
+
 setup_vim_commands()
 
 
