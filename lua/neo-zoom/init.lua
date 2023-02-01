@@ -38,10 +38,10 @@ end
 function M.setup(opt)
   if not opt then opt = {} end
 
-  M.top_ratio = 1.0
-  M.left_ratio = 1.0
-  M.height_ratio = 1.0
-  M.width_ratio = 1.0
+  M.top_ratio = 0.95
+  M.left_ratio = 0.95
+  M.height_ratio = 0.95
+  M.width_ratio = 0.95
   M.border = opt.border or 'double'
 
   M.disable_by_cursor = opt.disable_by_cursor
